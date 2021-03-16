@@ -19,10 +19,12 @@ shared_examples_for "changing nothing" do
     expect(File.file?("/tmp/file-transaction_fixtures/a")).to eq(true)
     expect(File.file?("/tmp/file-transaction_fixtures/b")).to eq(true)
     expect(File.file?("/tmp/file-transaction_fixtures/c")).to eq(true)
+    expect(File.file?("/tmp/file-transaction_fixtures/directory/a")).to eq(true)
 
     expect(File.read("/tmp/file-transaction_fixtures/a")).to eq("")
     expect(File.read("/tmp/file-transaction_fixtures/b")).to eq("")
     expect(File.read("/tmp/file-transaction_fixtures/c")).to eq("")
+    expect(File.read("/tmp/file-transaction_fixtures/directory/a")).to eq("")
   end
 end
 
@@ -68,6 +70,20 @@ describe File do
         expect(File.read("/tmp/file-transaction_fixtures/c")).to eq("")
       end
 
+      context "in a subdirectory" do
+        let(:blk) do
+          Proc.new do |directory|
+            FileUtils.rm(directory.join("directory", "a"))
+          end
+        end
+
+        it "deletes the file" do
+          subject
+
+          expect(File.file?("/tmp/file-transaction_fixtures/directory/a")).to eq(false)
+        end
+      end
+
       context "but an exception is raised" do
         let(:blk) do
           Proc.new do |directory|
@@ -101,6 +117,20 @@ describe File do
         expect(File.file?("/tmp/file-transaction_fixtures/c")).to eq(true)
         expect(File.read("/tmp/file-transaction_fixtures/b")).to eq("")
         expect(File.read("/tmp/file-transaction_fixtures/c")).to eq("")
+      end
+
+      context "in a subdirectory" do
+        let(:blk) do
+          Proc.new do |directory|
+            system("echo hello world > #{directory}/directory/a")
+          end
+        end
+
+        it "writes to the file" do
+          subject
+
+          expect(File.read("/tmp/file-transaction_fixtures/directory/a")).to eq("hello world\n")
+        end
       end
 
       context "but an exception is raised" do
