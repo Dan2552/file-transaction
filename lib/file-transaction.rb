@@ -11,19 +11,20 @@ module FileTransaction
     if files_in(target).empty?
       FileUtils.cp_r(File.join(directory, "."), target)
     else
+      relative_files_in(directory).each do |file|
+        FileUtils.mkdir_p(File.join(target, file.dirname))
+        begin
+          FileUtils.cp(File.join(directory, file), File.join(target, file))
+        rescue Errno::EACCES
+          FileUtils.rm_rf(File.join(target, file))
+          FileUtils.cp(File.join(directory, file), File.join(target, file))
+        end
+      end
+
       files_for_deletion = relative_files_in(target) - relative_files_in(directory)
 
       files_for_deletion.each do |file|
         FileUtils.rm(File.join(target, file))
-      end
-
-      relative_files_in(directory).each do |file|
-        # git files will specifically give a write error, but also there's no
-        # point in syncing them anyway, as it'll see the amended files.
-        next if file.to_s.include?(".git/")
-
-        FileUtils.mkdir_p(File.join(target, file.dirname))
-        FileUtils.cp(File.join(directory, file), File.join(target, file))
       end
     end
   end

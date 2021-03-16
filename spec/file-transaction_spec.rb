@@ -157,5 +157,74 @@ describe File do
         it_behaves_like "raising the error"
       end
     end
+
+    context "when committing changes with git" do
+      let(:blk) do
+        Proc.new do |directory|
+          system("cd #{directory} && touch committed && git add committed && git commit -m 'commit'") ||
+            raise("Failed to commit")
+        end
+      end
+
+      it "keeps the commit" do
+        expect { subject }
+          .to change { `cd /tmp/file-transaction_fixtures && git log -1 --format="%H"`.chomp }
+      end
+
+      context "when it raises an exception" do
+        let(:blk) do
+          Proc.new do |directory|
+            system("cd #{directory} && touch committed && git add committed && git commit -m 'commit' >/dev/null") ||
+            raise("Failed to commit")
+
+            raise "anything"
+          end
+        end
+
+        it_behaves_like "raising the error"
+
+        it "stays on the older commit" do
+          expect { subject rescue nil}
+            .to_not change { `cd /tmp/file-transaction_fixtures && git log -1 --format="%H"`.chomp }
+        end
+      end
+    end
+
+    context "when changing branch with git" do
+      let(:blk) do
+        Proc.new do |directory|
+          system("cd #{directory} && git checkout -b another-branch") ||
+            raise("Failed to change branch")
+        end
+      end
+
+      it "changes branch" do
+        subject
+
+        current_branch = `cd /tmp/file-transaction_fixtures && git branch | sed -n '/\* /s///p'`.chomp
+
+        expect(current_branch)
+          .to eq("another-branch")
+      end
+
+      context "when it raises an exception" do
+        let(:blk) do
+          Proc.new do |directory|
+            system("cd /tmp/file-transaction_fixtures && git checkout -b another-branch")
+            raise "anything"
+          end
+        end
+
+        it_behaves_like "raising the error"
+
+        it "stays on the older branch" do
+          current_branch = `cd /tmp/file-transaction_fixtures && git branch | sed -n '/\* /s///p'`.chomp
+
+          expect(current_branch)
+            .to eq("master")
+            .or eq("main")
+        end
+      end
+    end
   end
 end
