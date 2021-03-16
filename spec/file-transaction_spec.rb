@@ -61,6 +61,12 @@ describe File do
         expect(File.file?("/tmp/file-transaction_fixtures/b")).to eq(false)
       end
 
+      it "shows only that file in the git changes" do
+        subject
+        git_status = `cd /tmp/file-transaction_fixtures && git status`.chomp
+        expect(git_status).to eq("On branch master\nChanges not staged for commit:\n  (use \"git add/rm <file>...\" to update what will be committed)\n  (use \"git restore <file>...\" to discard changes in working directory)\n\tdeleted:    b\n\nno changes added to commit (use \"git add\" and/or \"git commit -a\")")
+      end
+
       it "doesn't touch the other files" do
         subject
 
@@ -117,6 +123,12 @@ describe File do
         expect(File.file?("/tmp/file-transaction_fixtures/c")).to eq(true)
         expect(File.read("/tmp/file-transaction_fixtures/b")).to eq("")
         expect(File.read("/tmp/file-transaction_fixtures/c")).to eq("")
+      end
+
+      it "shows only that file in the git changes" do
+        subject
+        git_status = `cd /tmp/file-transaction_fixtures && git status`.chomp
+        expect(git_status).to eq("On branch master\nChanges not staged for commit:\n  (use \"git add <file>...\" to update what will be committed)\n  (use \"git restore <file>...\" to discard changes in working directory)\n\tmodified:   a\n\nno changes added to commit (use \"git add\" and/or \"git commit -a\")")
       end
 
       context "in a subdirectory" do
