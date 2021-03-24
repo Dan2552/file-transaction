@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    file-transaction (0.1.0)
+    file-transaction (1.0.0)
 
 GEM
   remote: https://rubygems.org/
