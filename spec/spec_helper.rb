@@ -1,5 +1,4 @@
 require "bundler/setup"
-require "pry"
 require "file-transaction"
 
 RSpec.configure do |config|
